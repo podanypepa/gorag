@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 )
 
 // EmbeddingRequest represents the request payload for the embedding API.
@@ -21,9 +22,24 @@ type EmbeddingResponse struct {
 
 // GetEmbedding fetches the embedding for the given text from the local API.
 func GetEmbedding(text string) ([]float64, error) {
-	req := EmbeddingRequest{Model: "llama3", Prompt: text}
-	data, _ := json.Marshal(req)
-	resp, err := http.Post("http://localhost:11434/api/embeddings", "application/json", bytes.NewReader(data))
+	model := os.Getenv("MODEL_NAME")
+	if model == "" {
+		model = "llama3"
+	}
+
+	ollamaURL := os.Getenv("OLLAMA_URL")
+	if ollamaURL == "" {
+		ollamaURL = "http://localhost:11434"
+	}
+
+	req := EmbeddingRequest{Model: model, Prompt: text}
+	data, err := json.Marshal(req)
+	if err != nil {
+		slog.Error("Failed to marshal embedding request", "error", err)
+		return nil, err
+	}
+
+	resp, err := http.Post(ollamaURL+"/api/embeddings", "application/json", bytes.NewReader(data))
 	if err != nil {
 		slog.Error("Failed to get embedding", "error", err)
 		return nil, err
@@ -32,6 +48,9 @@ func GetEmbedding(text string) ([]float64, error) {
 	fmt.Printf("Response status: %s\n", resp.Status)
 
 	var result EmbeddingResponse
-	json.NewDecoder(resp.Body).Decode(&result)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		slog.Error("Failed to decode embedding response", "error", err)
+		return nil, err
+	}
 	return result.Embedding, nil
 }

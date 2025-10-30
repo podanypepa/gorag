@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 // GenerateRequest represents the request payload for the Ollama API.
@@ -25,14 +26,24 @@ type GenerateChunk struct {
 func StreamOllama(model, prompt string, ch chan string) {
 	defer close(ch)
 
+	ollamaURL := os.Getenv("OLLAMA_URL")
+	if ollamaURL == "" {
+		ollamaURL = "http://localhost:11434"
+	}
+
 	req := GenerateRequest{
 		Model:  model,
 		Prompt: prompt,
 		Stream: true,
 	}
 
-	data, _ := json.Marshal(req)
-	resp, err := http.Post("http://localhost:11434/api/generate", "application/json", bytes.NewReader(data))
+	data, err := json.Marshal(req)
+	if err != nil {
+		ch <- fmt.Sprintf("[chyba marshalling: %v]", err)
+		return
+	}
+
+	resp, err := http.Post(ollamaURL+"/api/generate", "application/json", bytes.NewReader(data))
 	if err != nil {
 		ch <- fmt.Sprintf("[chyba připojení: %v]", err)
 		return
