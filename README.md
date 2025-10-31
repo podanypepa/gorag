@@ -70,7 +70,7 @@ The response will be streamed as plain text.
 
 ## 🖥️ CLI Client
 
-In the `bin/client` directory, you'll find a simple command-line client for interacting with the Ollama API.
+In the `bin/client` directory, you'll find a simple command-line client that can stream responses from the Ollama API directly to your terminal.
 
 ### Build
 
