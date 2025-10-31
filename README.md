@@ -68,6 +68,28 @@ curl "http://localhost:9090/ask?q=What is the main topic of the document?"
 
 The response will be streamed as plain text.
 
+## 🖥️ CLI Client
+
+In the `bin/client` directory, you'll find a simple command-line client for interacting with the Ollama API.
+
+### Build
+
+```bash
+cd bin/client
+go build -o ollama_stream .
+```
+
+### Usage
+
+```bash
+./ollama_stream "Why is the sky blue?"
+```
+
+You can also specify the model:
+```bash
+./ollama_stream -model llama3 "Tell me a joke about a programmer."
+```
+
 ## 🔮 Future Improvements
 
 -   [ ] Replace the in-memory store with a robust vector database (e.g., ChromaDB, Weaviate).
