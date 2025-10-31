@@ -5,57 +5,87 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
 // OllamaResponse represents the structure of the response from the Ollama API.
 type OllamaResponse struct {
-	Model              string  `json:"model"`
-	CreatedAt          string  `json:"created_at"`
-	Response           string  `json:"response"`
-	Done               bool    `json:"done"`
-	DoneReason         string  `json:"done_reason"`
-	TotalDuration      float64 `json:"total_duration"`
-	EvalCount          int     `json:"eval_count"`
-	EvalDuration       float64 `json:"eval_duration"`
-	LoadDuration       float64 `json:"load_duration"`
-	PromptEvalCount    int     `json:"prompt_eval_count"`
-	PromptEvalDuration float64 `json:"prompt_eval_duration"`
+	Model              string    `json:"model"`
+	CreatedAt          time.Time `json:"created_at"`
+	Response           string    `json:"response"`
+	Done               bool      `json:"done"`
+	DoneReason         string    `json:"done_reason,omitempty"`
+	TotalDuration      float64   `json:"total_duration,omitempty"`
+	EvalCount          int       `json:"eval_count,omitempty"`
+	EvalDuration       float64   `json:"eval_duration,omitempty"`
+	LoadDuration       float64   `json:"load_duration,omitempty"`
+	PromptEvalCount    int       `json:"prompt_eval_count,omitempty"`
+	PromptEvalDuration float64   `json:"prompt_eval_duration,omitempty"`
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Ussage: go run ollama_stream.go \"Your prompt here\"")
+	model := flag.String("model", "mistral", "Model to use for the generation")
+	url := flag.String("url", "http://localhost:11434/api/generate", "Ollama API URL")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [options] <prompt>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Options:\n")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	if flag.NArg() == 0 {
+		fmt.Println("Error: Prompt is required.")
+		flag.Usage()
 		os.Exit(1)
 	}
-	prompt := os.Args[1]
+	prompt := strings.Join(flag.Args(), " ")
 
 	start := time.Now()
 
+	last, err := streamOllama(*url, *model, prompt)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	printStats(last, time.Since(start))
+}
+
+func streamOllama(url, model, prompt string) (OllamaResponse, error) {
+	var last OllamaResponse
+
 	payload := map[string]any{
-		"model": "mistral",
-		// "model":  "llama3",
+		"model":  model,
 		"prompt": prompt,
 	}
-	body, _ := json.Marshal(payload)
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return last, fmt.Errorf("failed to marshal payload: %w", err)
+	}
 
-	req, _ := http.NewRequest("POST", "http://localhost:11434/api/generate", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		return last, fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Ollama could not be reached. Is the Ollama server running?")
-		os.Exit(1)
+		return last, fmt.Errorf("ollama could not be reached. Is the Ollama server running? %w", err)
 	}
 	defer resp.Body.Close()
 
-	reader := bufio.NewReader(resp.Body)
-	var last OllamaResponse
+	if resp.StatusCode != http.StatusOK {
+		return last, fmt.Errorf("received non-200 status code: %d", resp.StatusCode)
+	}
 
+	reader := bufio.NewReader(resp.Body)
 	for {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
@@ -68,6 +98,7 @@ func main() {
 
 		var msg OllamaResponse
 		if err := json.Unmarshal(line, &msg); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to unmarshal line: %v\n", err)
 			continue
 		}
 
@@ -80,16 +111,21 @@ func main() {
 			break
 		}
 	}
+	return last, nil
+}
 
-	elapsed := time.Since(start)
-
-	fmt.Println("\n\n--- 📊 Statistiky ---")
+func printStats(last OllamaResponse, elapsed time.Duration) {
+	fmt.Println("\n\n--- 📊 Statistics ---")
 	fmt.Printf("Model: %s\n", last.Model)
-	fmt.Printf("Doba trvání: %.2f s\n", elapsed.Seconds())
-	fmt.Printf("Tokeny (vstupní/výstupní): %d / %d\n", last.PromptEvalCount, last.EvalCount)
+	fmt.Printf("Duration: %.2f s\n", elapsed.Seconds())
+	if last.PromptEvalCount > 0 && last.EvalCount > 0 {
+		fmt.Printf("Tokens (prompt/generated): %d / %d\n", last.PromptEvalCount, last.EvalCount)
+	}
 	if last.EvalDuration > 0 {
 		speed := float64(last.EvalCount) / (last.EvalDuration / 1e9)
-		fmt.Printf("Rychlost: %.1f tokenů/s\n", speed)
+		fmt.Printf("Speed: %.1f tokens/s\n", speed)
 	}
-	fmt.Printf("Celková doba generování: %.2f s\n", last.TotalDuration/1e9)
+	if last.TotalDuration > 0 {
+		fmt.Printf("Total generation time: %.2f s\n", last.TotalDuration/1e9)
+	}
 }
