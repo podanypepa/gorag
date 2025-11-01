@@ -1,3 +1,4 @@
+// Package main implements a document retrieval and question-answering server.
 package main
 
 import (
