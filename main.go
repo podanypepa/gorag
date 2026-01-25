@@ -26,6 +26,7 @@ func run() error {
 		indexFile = "index.json"
 	}
 
+	slog.Info("Loading or creating index", "file", indexFile)
 	store, err := LoadStore(indexFile)
 	if err != nil {
 		return fmt.Errorf("failed to load store: %w", err)
@@ -49,15 +50,18 @@ func buildIndex(store *VectorStore) error {
 	if pdfDir == "" {
 		pdfDir = "docs/"
 	}
+	slog.Info("Building index from files", "directory", pdfDir)
 
-	files, err := filepath.Glob(filepath.Join(pdfDir, "*.pdf"))
+	// files, err := filepath.Glob(filepath.Join(pdfDir, "*.pdf"))
+	files, err := filepath.Glob(filepath.Join(pdfDir, "*.md"))
 	if err != nil {
 		return fmt.Errorf("failed to find PDF files: %w", err)
 	}
 
 	for _, f := range files {
 		slog.Info("Processing file", "path", f)
-		text, err := ExtractText(f)
+		// text, err := ExtractText(f)
+		text, err := ExtractMDText(f)
 		if err != nil {
 			slog.Error("Failed to extract text", "file", f, "error", err)
 			continue
@@ -85,6 +89,7 @@ func startServer(store *VectorStore) error {
 		if q == "" {
 			return c.Status(400).SendString("Missing query parameter 'q'")
 		}
+		slog.Info("Received query", "query", q)
 
 		qEmb, err := GetEmbedding(q)
 		if err != nil {

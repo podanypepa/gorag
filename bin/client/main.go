@@ -29,7 +29,7 @@ type OllamaResponse struct {
 }
 
 func main() {
-	model := flag.String("model", "mistral", "Model to use for the generation")
+	model := flag.String("model", "gpt-oss:20b", "Model to use for the generation")
 	url := flag.String("url", "http://localhost:11434/api/generate", "Ollama API URL")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] <prompt>\n", os.Args[0])
