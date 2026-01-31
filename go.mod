@@ -3,7 +3,7 @@ module github.com/podanypepa/gorag
 go 1.25.2
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.10
+	github.com/gofiber/fiber/v2 v2.52.11
 	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 )
 
