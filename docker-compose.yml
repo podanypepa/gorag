@@ -1,0 +1,25 @@
+services:
+  gorag:
+    build: .
+    ports:
+      - "9090:9090"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - MODEL_NAME=llama3
+      - INDEX_DIR=/root/index_db
+      - PDF_DIR=/root/docs
+    volumes:
+      - ./index_db:/root/index_db
+      - ./docs:/root/docs
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:
