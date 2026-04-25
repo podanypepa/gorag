@@ -3,6 +3,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -16,13 +17,16 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	indexOnly := flag.Bool("index", false, "Build the index from documents and exit")
+	flag.Parse()
+
+	if err := run(*indexOnly); err != nil {
 		slog.Error("Application failed", "error", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(indexOnly bool) error {
 	indexFile := os.Getenv("INDEX_FILE")
 	if indexFile == "" {
 		indexFile = "index.json"
@@ -34,15 +38,21 @@ func run() error {
 		return fmt.Errorf("failed to load store: %w", err)
 	}
 
-	if err := buildIndex(store); err != nil {
-		return fmt.Errorf("failed to build index: %w", err)
+	if indexOnly {
+		if err := buildIndex(store); err != nil {
+			return fmt.Errorf("failed to build index: %w", err)
+		}
+
+		if err := store.Save(indexFile); err != nil {
+			return fmt.Errorf("failed to save store: %w", err)
+		}
+		slog.Info("Index built successfully", "documents", len(store.Docs))
+		return nil
 	}
 
-	if err := store.Save(indexFile); err != nil {
-		return fmt.Errorf("failed to save store: %w", err)
+	if len(store.Docs) == 0 {
+		slog.Warn("Vector store is empty. Use --index to build it.")
 	}
-
-	slog.Info("Index created", "documents", len(store.Docs))
 
 	return startServer(store)
 }
