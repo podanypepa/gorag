@@ -13,10 +13,7 @@ func splitText(text string, size, overlap int) []string {
 	}
 
 	for i := 0; i < len(words); {
-		end := i + size
-		if end > len(words) {
-			end = len(words)
-		}
+		end := min(i+size, len(words))
 		chunks = append(chunks, strings.Join(words[i:end], " "))
 		if end == len(words) {
 			break
