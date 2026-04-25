@@ -144,7 +144,7 @@ func startServer(store *VectorStore) error {
 
 		var context strings.Builder
 		for i, r := range results {
-			context.WriteString(fmt.Sprintf("[Source %d: %s]\n", i+1, filepath.Base(r.Source)))
+			fmt.Fprintf(&context, "[Source %d: %s]\n", i+1, filepath.Base(r.Source))
 			context.WriteString(r.Text)
 			context.WriteString("\n\n")
 		}

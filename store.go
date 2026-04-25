@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -73,8 +74,10 @@ func (vs *VectorStore) Add(doc Document) error {
 		if err != nil {
 			return err
 		}
-		// Use a simple incrementing key or hash of text
-		key := fmt.Sprintf("doc_%d", len(vs.Docs))
+		// Use SHA256 hash of text and source as key
+		h := sha256.New()
+		h.Write([]byte(doc.Source + doc.Text))
+		key := fmt.Sprintf("%x", h.Sum(nil))
 		return txn.Set([]byte(key), data)
 	})
 }

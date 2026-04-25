@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"os"
@@ -29,19 +28,9 @@ func ExtractText(path string) (string, error) {
 }
 
 func ExtractMDText(path string) (string, error) {
-	f, err := os.Open(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
-
-	var buf bytes.Buffer
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		buf.WriteString(scanner.Text() + "\n")
-	}
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
+	return string(data), nil
 }
