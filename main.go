@@ -113,6 +113,11 @@ func buildIndex(store *VectorStore) error {
 
 func startServer(store *VectorStore) error {
 	app := fiber.New()
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendFile("index.html")
+	})
+
 	app.Get("/ask", func(c *fiber.Ctx) error {
 		start := time.Now()
 
