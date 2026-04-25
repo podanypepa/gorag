@@ -1,28 +1,30 @@
 # 🚀 GoRAG - Your Local RAG Assistant in Go
 
-GoRAG is a simple yet powerful RAG (Retrieval-Augmented Generation) application written in Go. It allows you to create a smart "knowledge base" from your PDF documents and ask it questions in natural language. Everything runs locally using [Ollama](https://ollama.ai/), so your data remains secure.
+GoRAG is a simple yet powerful RAG (Retrieval-Augmented Generation) application written in Go. It allows you to create a smart "knowledge base" from your documents (PDF and Markdown) and interact with it through a modern web interface or API. Everything runs locally using [Ollama](https://ollama.ai/), ensuring your data privacy.
 
 ## ✨ Key Features
 
-- **PDF Text Extraction:** Automatically reads and processes all PDF files from a specified directory.
-- **Vector Embedding Generation:** Creates semantic representations of text chunks using a locally running language model via Ollama.
-- **In-Memory Vector Search:** Fast and efficient retrieval of relevant information thanks to a custom in-memory vector store implementation.
-- **Answer Generation:** Leverages the power of Large Language Models (LLMs) to synthesize answers based on the retrieved context.
-- **Response Streaming:** Answers are streamed in real-time, ensuring a smooth user experience.
-- **Simple REST API:** An easy-to-integrate interface for asking questions.
-- **Flexible Configuration:** Key parameters can be configured via environment variables.
+- **Multi-Format Extraction:** Automatically processes **PDF** and **Markdown** files from your documents directory.
+- **Modern Web UI:** Beautiful, responsive chat interface with real-time response streaming.
+- **Persistent Vector Store:** Powered by **BadgerDB**, providing high-performance local storage (no more massive JSON files).
+- **Source Citations:** The assistant cites specific sources (e.g., `[Source 1]`) in its answers so you can verify the information.
+- **Smart Chunking:** Text is split into chunks with **configurable overlap** to preserve context across boundaries.
+- **Docker Ready:** Complete `docker-compose.yml` included for easy deployment with Ollama.
+- **Graceful Shutdown:** Cleanly handles termination signals to ensure data integrity.
+- **Index Management CLI:** Build your index on demand with a dedicated flag.
+- **Structured Logging:** Uses Go's `slog` for clean, professional logging.
 
 ## 🏁 Getting Started
 
 ### Prerequisites
 
-- **Go:** Version 1.22 or higher.
-- **Ollama:** An installed and running instance of Ollama with at least one model downloaded (e.g., `llama3`).
+- **Go:** Version 1.25 or higher.
+- **Ollama:** Installed and running with your preferred model (e.g., `llama3`).
   ```bash
   ollama pull llama3
   ```
 
-### Installation and Setup
+### Installation and Setup (Local)
 
 1.  **Clone the repository:**
     ```bash
@@ -31,72 +33,60 @@ GoRAG is a simple yet powerful RAG (Retrieval-Augmented Generation) application 
     ```
 
 2.  **Add your documents:**
-    Place your PDF files into the `docs/` directory.
+    Place your `.pdf` or `.md` files into the `docs/` directory.
 
-3.  **Run the application:**
+3.  **Build the Index:**
+    ```bash
+    go run . --index
+    ```
+
+4.  **Run the Server:**
     ```bash
     go run .
     ```
+    Visit `http://localhost:9090` in your browser.
 
-On the first run, the application will create an `index.json` file from all found PDF documents. It will then start the web server.
+### Installation and Setup (Docker)
+
+1. **Start the containers:**
+   ```bash
+   docker-compose up -d
+   ```
+2. **Download the model (first time):**
+   ```bash
+   docker exec -it gorag-ollama-1 ollama run llama3
+   ```
+3. **Index your documents:**
+   ```bash
+   docker-compose run gorag ./gorag --index
+   ```
 
 ## ⚙️ Configuration
 
-The application can be configured using the following environment variables:
-
 | Variable      | Description                                  | Default Value                    |
 |---------------|----------------------------------------------|----------------------------------|
-| `OLLAMA_URL`  | The URL of the running Ollama API instance.  | `http://localhost:11434`         |
+| `OLLAMA_URL`  | The URL of the Ollama API instance.          | `http://localhost:11434`         |
 | `MODEL_NAME`  | The name of the model to use.                | `llama3`                         |
-| `INDEX_FILE`  | The path to the vector index file.           | `index.json`                     |
-| `PDF_DIR`     | The directory containing PDF documents to index. | `docs/`                          |
-| `SERVER_PORT` | The port on which the web server will run.   | `9090`                           |
-
-**Example of running with custom configuration:**
-```bash
-MODEL_NAME=mistral SERVER_PORT=8888 go run .
-```
+| `INDEX_DIR`   | The directory for the BadgerDB store.        | `index_db`                       |
+| `PDF_DIR`     | The directory containing documents.          | `docs/`                          |
+| `SERVER_PORT` | The port for the web server.                 | `9090`                           |
 
 ## 🔌 API Usage
 
-After starting the server, you can ask questions by making a simple GET request to the `/ask` endpoint.
-
-**Example using `curl`:**
+Ask questions via simple GET requests:
 ```bash
-curl "http://localhost:9090/ask?q=What is the main topic of the document?"
+curl "http://localhost:9090/ask?q=What are the key findings?"
 ```
-
-The response will be streamed as plain text.
 
 ## 🖥️ CLI Client
 
-In the `bin/client` directory, you'll find a simple command-line client that can stream responses from the Ollama API directly to your terminal.
-
-### Build
+A simple streaming CLI client is available in `bin/client`.
 
 ```bash
 cd bin/client
 go build -o ollama_stream .
+./ollama_stream "Explain quantum computing."
 ```
-
-### Usage
-
-```bash
-./ollama_stream "Why is the sky blue?"
-```
-
-You can also specify the model:
-```bash
-./ollama_stream -model llama3 "Tell me a joke about a programmer."
-```
-
-## 🔮 Future Improvements
-
--   [ ] Replace the in-memory store with a robust vector database (e.g., ChromaDB, Weaviate).
--   [ ] Implement more advanced text chunking strategies.
--   [ ] Use a dedicated tokenizer for more accurate token counting.
--   [ ] Extend the API with more endpoints (document management, index status).
--   [ ] Containerize the application with Docker for easier deployment.
 
 ---
-*This project was created to explore the capabilities of RAG applications in Go. It serves as a great starting point for your own experiments!*
+*This project explores the power of local RAG systems using Go. Secure, fast, and fully local.*
