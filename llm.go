@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 )
 
 // GenerateRequest represents the request payload for the Ollama API.
@@ -43,7 +44,11 @@ func StreamOllama(model, prompt string, ch chan string) {
 		return
 	}
 
-	resp, err := http.Post(ollamaURL+"/api/generate", "application/json", bytes.NewReader(data))
+	client := &http.Client{
+		Timeout: 5 * time.Minute,
+	}
+
+	resp, err := client.Post(ollamaURL+"/api/generate", "application/json", bytes.NewReader(data))
 	if err != nil {
 		ch <- fmt.Sprintf("[chyba připojení: %v]", err)
 		return

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 )
 
 // EmbeddingRequest represents the request payload for the embedding API.
@@ -39,7 +40,11 @@ func GetEmbedding(text string) ([]float64, error) {
 		return nil, err
 	}
 
-	resp, err := http.Post(ollamaURL+"/api/embeddings", "application/json", bytes.NewReader(data))
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	resp, err := client.Post(ollamaURL+"/api/embeddings", "application/json", bytes.NewReader(data))
 	if err != nil {
 		slog.Error("Failed to get embedding", "error", err)
 		return nil, err

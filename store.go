@@ -12,6 +12,7 @@ import (
 // Document represents a text chunk and its corresponding embedding.
 type Document struct {
 	Text      string    `json:"text"`
+	Source    string    `json:"source"`
 	Embedding []float64 `json:"embedding"`
 }
 

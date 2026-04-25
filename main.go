@@ -52,15 +52,24 @@ func buildIndex(store *VectorStore) error {
 	}
 	slog.Info("Building index from files", "directory", pdfDir)
 
-	// files, err := filepath.Glob(filepath.Join(pdfDir, "*.pdf"))
+	// Create a map of already indexed files
+	indexedFiles := make(map[string]bool)
+	for _, doc := range store.Docs {
+		indexedFiles[doc.Source] = true
+	}
+
 	files, err := filepath.Glob(filepath.Join(pdfDir, "*.md"))
 	if err != nil {
-		return fmt.Errorf("failed to find PDF files: %w", err)
+		return fmt.Errorf("failed to find MD files: %w", err)
 	}
 
 	for _, f := range files {
+		if indexedFiles[f] {
+			slog.Debug("File already indexed, skipping", "path", f)
+			continue
+		}
+
 		slog.Info("Processing file", "path", f)
-		// text, err := ExtractText(f)
 		text, err := ExtractMDText(f)
 		if err != nil {
 			slog.Error("Failed to extract text", "file", f, "error", err)
@@ -74,7 +83,11 @@ func buildIndex(store *VectorStore) error {
 				slog.Error("Failed to get embedding", "chunk", ch, "error", err)
 				continue
 			}
-			store.Add(Document{Text: ch, Embedding: emb})
+			store.Add(Document{
+				Text:      ch,
+				Source:    f,
+				Embedding: emb,
+			})
 		}
 	}
 	return nil
