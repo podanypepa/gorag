@@ -75,7 +75,7 @@ func buildIndex(store *VectorStore) error {
 			slog.Error("Failed to extract text", "file", f, "error", err)
 			continue
 		}
-		chunks := splitText(text, 800)
+		chunks := splitText(text, 800, 150)
 
 		for _, ch := range chunks {
 			emb, err := GetEmbedding(ch)

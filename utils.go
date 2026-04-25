@@ -2,13 +2,26 @@ package main
 
 import "strings"
 
-func splitText(text string, size int) []string {
+func splitText(text string, size, overlap int) []string {
 	var chunks []string
 	words := strings.Fields(text)
-	for i := 0; i < len(words); i += size {
+	if size <= 0 {
+		return chunks
+	}
+	if overlap >= size {
+		overlap = size / 2
+	}
+
+	for i := 0; i < len(words); {
 		end := i + size
-		end = min(end, len(words))
+		if end > len(words) {
+			end = len(words)
+		}
 		chunks = append(chunks, strings.Join(words[i:end], " "))
+		if end == len(words) {
+			break
+		}
+		i += (size - overlap)
 	}
 	return chunks
 }
