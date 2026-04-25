@@ -27,24 +27,21 @@ func main() {
 }
 
 func run(indexOnly bool) error {
-	indexFile := os.Getenv("INDEX_FILE")
-	if indexFile == "" {
-		indexFile = "index.json"
+	indexDir := os.Getenv("INDEX_DIR")
+	if indexDir == "" {
+		indexDir = "index_db"
 	}
 
-	slog.Info("Loading or creating index", "file", indexFile)
-	store, err := LoadStore(indexFile)
+	slog.Info("Opening vector store", "directory", indexDir)
+	store, err := NewVectorStore(indexDir)
 	if err != nil {
-		return fmt.Errorf("failed to load store: %w", err)
+		return fmt.Errorf("failed to open store: %w", err)
 	}
+	defer store.Close()
 
 	if indexOnly {
 		if err := buildIndex(store); err != nil {
 			return fmt.Errorf("failed to build index: %w", err)
-		}
-
-		if err := store.Save(indexFile); err != nil {
-			return fmt.Errorf("failed to save store: %w", err)
 		}
 		slog.Info("Index built successfully", "documents", len(store.Docs))
 		return nil

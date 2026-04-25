@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
-	"os"
 	"sort"
+
+	badger "github.com/dgraph-io/badger/v4"
 )
 
 // Document represents a text chunk and its corresponding embedding.
@@ -16,43 +16,72 @@ type Document struct {
 	Embedding []float64 `json:"embedding"`
 }
 
-// VectorStore holds a collection of documents in memory.
-// For larger datasets, consider using a dedicated vector database
-// like ChromaDB, Weaviate, or a library like Faiss.
+// VectorStore holds a collection of documents with BadgerDB persistence.
 type VectorStore struct {
-	Docs []Document `json:"docs"`
+	db   *badger.DB
+	Docs []Document // In-memory cache for fast search
 }
 
-// Add appends a new document to the vector store.
-func (vs *VectorStore) Add(doc Document) {
-	vs.Docs = append(vs.Docs, doc)
-}
-
-// Save serializes the vector store to a JSON file.
-func (vs *VectorStore) Save(path string) error {
-	data, err := json.MarshalIndent(vs, "", "  ")
+// NewVectorStore initializes a new VectorStore with BadgerDB.
+func NewVectorStore(path string) (*VectorStore, error) {
+	opts := badger.DefaultOptions(path).WithLoggingLevel(badger.ERROR)
+	db, err := badger.Open(opts)
 	if err != nil {
-		return fmt.Errorf("failed to marshal vector store: %w", err)
+		return nil, fmt.Errorf("failed to open badger db: %w", err)
 	}
-	return os.WriteFile(path, data, 0644)
-}
 
-// LoadStore deserializes the vector store from a JSON file.
-// If the file does not exist, it returns a new, empty VectorStore.
-func LoadStore(path string) (*VectorStore, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return &VectorStore{}, nil
+	vs := &VectorStore{
+		db:   db,
+		Docs: []Document{},
+	}
+
+	// Load existing documents into memory
+	err = db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			err := item.Value(func(v []byte) error {
+				var doc Document
+				if err := json.Unmarshal(v, &doc); err != nil {
+					return err
+				}
+				vs.Docs = append(vs.Docs, doc)
+				return nil
+			})
+			if err != nil {
+				return err
+			}
 		}
-		return nil, fmt.Errorf("failed to read vector store file: %w", err)
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to load documents from db: %w", err)
 	}
 
-	var vs VectorStore
-	if err := json.Unmarshal(data, &vs); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal vector store: %w", err)
-	}
-	return &vs, nil
+	return vs, nil
+}
+
+// Add appends a new document to the vector store and persists it.
+func (vs *VectorStore) Add(doc Document) error {
+	vs.Docs = append(vs.Docs, doc)
+
+	return vs.db.Update(func(txn *badger.Txn) error {
+		data, err := json.Marshal(doc)
+		if err != nil {
+			return err
+		}
+		// Use a simple incrementing key or hash of text
+		key := fmt.Sprintf("doc_%d", len(vs.Docs))
+		return txn.Set([]byte(key), data)
+	})
+}
+
+// Close closes the underlying database.
+func (vs *VectorStore) Close() error {
+	return vs.db.Close()
 }
 
 // cosine calculates the cosine similarity between two vectors.
