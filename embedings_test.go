@@ -12,7 +12,7 @@ func TestGetEmbedding(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GetEmbedding failed: %v", err)
 		}
-		fmt.Printf("Embedding: %v\n", embedding)
+		slog.Info("Embedding received", "length", len(embedding))
 		if len(embedding) == 0 {
 			t.Fatal("Expected non-empty embedding")
 		}

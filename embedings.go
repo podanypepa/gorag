@@ -50,7 +50,7 @@ func GetEmbedding(text string) ([]float64, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	fmt.Printf("Response status: %s\n", resp.Status)
+	slog.Debug("Ollama embedding response", "status", resp.Status)
 
 	var result EmbeddingResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
