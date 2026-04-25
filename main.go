@@ -111,9 +111,10 @@ func startServer(store *VectorStore) error {
 		results := store.Search(qEmb, 3)
 
 		var context strings.Builder
-		for _, r := range results {
+		for i, r := range results {
+			context.WriteString(fmt.Sprintf("[Source %d: %s]\n", i+1, filepath.Base(r.Source)))
 			context.WriteString(r.Text)
-			context.WriteString("\n")
+			context.WriteString("\n\n")
 		}
 
 		model := os.Getenv("MODEL_NAME")
@@ -122,7 +123,9 @@ func startServer(store *VectorStore) error {
 		}
 
 		prompt := fmt.Sprintf(
-			"Použij následující kontext k odpovědi na dotaz:\n\n%s\n\nOtázka: %s",
+			"You are a helpful assistant. Use the following context to answer the query. "+
+				"If you find the answer in the context, cite the source number (e.g., [Source 1]). "+
+				"If the answer is not in the context, state that you do not know.\n\nContext:\n%s\n\nQuestion: %s",
 			context.String(), q,
 		)
 		inputTokens := estimateTokens(prompt)

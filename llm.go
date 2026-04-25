@@ -40,7 +40,7 @@ func StreamOllama(model, prompt string, ch chan string) {
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		ch <- fmt.Sprintf("[chyba marshalling: %v]", err)
+		ch <- fmt.Sprintf("[marshalling error: %v]", err)
 		return
 	}
 
@@ -50,7 +50,7 @@ func StreamOllama(model, prompt string, ch chan string) {
 
 	resp, err := client.Post(ollamaURL+"/api/generate", "application/json", bytes.NewReader(data))
 	if err != nil {
-		ch <- fmt.Sprintf("[chyba připojení: %v]", err)
+		ch <- fmt.Sprintf("[connection error: %v]", err)
 		return
 	}
 	defer resp.Body.Close()
