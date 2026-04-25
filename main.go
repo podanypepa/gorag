@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -188,6 +190,26 @@ func startServer(store *VectorStore) error {
 		port = "9090"
 	}
 
+	// Graceful shutdown setup
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		slog.Info("Shutting down server...")
+		if err := app.Shutdown(); err != nil {
+			slog.Error("Server shutdown failed", "error", err)
+		}
+		close(idleConnsClosed)
+	}()
+
 	slog.Info("Server is running", "port", port)
-	return app.Listen(":" + port)
+	if err := app.Listen(":" + port); err != nil {
+		slog.Error("Server failed to start", "error", err)
+	}
+
+	<-idleConnsClosed
+	slog.Info("Server stopped")
+	return nil
 }
