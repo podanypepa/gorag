@@ -58,25 +58,43 @@ func buildIndex(store *VectorStore) error {
 		indexedFiles[doc.Source] = true
 	}
 
-	files, err := filepath.Glob(filepath.Join(pdfDir, "*.md"))
+	entries, err := os.ReadDir(pdfDir)
 	if err != nil {
-		return fmt.Errorf("failed to find MD files: %w", err)
+		return fmt.Errorf("failed to read directory %s: %w", pdfDir, err)
 	}
 
-	for _, f := range files {
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		f := filepath.Join(pdfDir, entry.Name())
 		if indexedFiles[f] {
 			slog.Debug("File already indexed, skipping", "path", f)
 			continue
 		}
 
-		slog.Info("Processing file", "path", f)
-		text, err := ExtractMDText(f)
+		ext := strings.ToLower(filepath.Ext(f))
+		var text string
+		var err error
+
+		switch ext {
+		case ".md":
+			slog.Info("Processing Markdown file", "path", f)
+			text, err = ExtractMDText(f)
+		case ".pdf":
+			slog.Info("Processing PDF file", "path", f)
+			text, err = ExtractText(f)
+		default:
+			continue
+		}
+
 		if err != nil {
 			slog.Error("Failed to extract text", "file", f, "error", err)
 			continue
 		}
-		chunks := splitText(text, 800, 150)
 
+		chunks := splitText(text, 800, 150)
 		for _, ch := range chunks {
 			emb, err := GetEmbedding(ch)
 			if err != nil {
