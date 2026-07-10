@@ -3,8 +3,8 @@ module github.com/podanypepa/gorag
 go 1.25.2
 
 require (
-	github.com/dgraph-io/badger/v4 v4.9.2
-	github.com/gofiber/fiber/v2 v2.52.13
+	github.com/dgraph-io/badger/v4 v4.9.4
+	github.com/gofiber/fiber/v2 v2.52.14
 	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 )
 
@@ -14,7 +14,7 @@ require (
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cristalhq/acmd v0.12.0 // indirect
-	github.com/dgraph-io/ristretto/v2 v2.4.0 // indirect
+	github.com/dgraph-io/ristretto/v2 v2.4.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-critic/go-critic v0.14.2 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -48,7 +48,7 @@ require (
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
