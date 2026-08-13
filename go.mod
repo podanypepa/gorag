@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/dgraph-io/badger/v4 v4.9.6
-	github.com/gofiber/fiber/v2 v2.52.14
+	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 )
 
