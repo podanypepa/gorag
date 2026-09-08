@@ -1,11 +1,11 @@
 module github.com/podanypepa/gorag
 
-go 1.25.2
+go 1.26.0
 
 require (
 	github.com/dgraph-io/badger/v4 v4.9.6
 	github.com/gofiber/fiber/v2 v2.52.15
-	github.com/ledongthuc/pdf v0.0.0-20260903153007-b3c860c23753
+	github.com/ledongthuc/pdf v0.0.0-20260907135840-6c8c28e0e8a0
 )
 
 require (
@@ -34,21 +34,22 @@ require (
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.29 // indirect
+	github.com/molecule-man/go-brrr v1.0.1 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.5 // indirect
 	github.com/quasilyte/gogrep v0.5.0 // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20210819130434-b3f0c404a727 // indirect
 	github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.73.0 // indirect
+	github.com/valyala/fasthttp v1.74.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.46.0 // indirect
 	go.opentelemetry.io/otel/metric v1.46.0 // indirect
 	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/mod v0.29.0 // indirect
-	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
